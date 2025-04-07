@@ -21,6 +21,7 @@ conf = {
     'auto.offset.reset': 'earliest',
 }
 consumer = Consumer(**conf)
+consumer.subscribe([KAFKA_TOPIC])
 
 # board config
 i2c = board.I2C()
@@ -40,12 +41,11 @@ try:
     finger_ring_R = servo.Servo(pca.channels[3])
     finger_pinkey_R = servo.Servo(pca.channels[4])
 
-    current_angle = 0
-    
-    finger_thumb_R.angle = current_angle
-    time.sleep(0.05)
+    ############## arm ####################
+    arm_wrist_R = servo.Servo(pca.channels[8])
+    arm_elbow_R = servo.Servo(pca.channels[9])
+    arm_sholder_R = servo.Servo(pca.channels[10])
 
-    print(f"this is initial angle: {current_angle}")
 
     # consume incoming messages
     try:
@@ -64,7 +64,24 @@ try:
             try:
                 data = msg.value().decode("utf-8")
                 print(f"Received message: {data}")
-                data_dict = json.loads(data)
+                detected_angles = json.loads(data)
+                
+                # set servo angles
+                hand_R = detected_angles["hand_R"]
+                arm_R = detected_angles["arm_R"]
+
+                finger_thumb_R.angle = hand_R["thumb"]
+                finger_index_R.angle = hand_R["thumb"]
+                finger_middle_R.angle = hand_R["thumb"]
+                finger_ring_R.angle = hand_R["thumb"]
+                finger_pinkey_R.angle = hand_R["thumb"]
+
+                arm_sholder_R.angle = arm_R["wrist"]
+                arm_elbow_R.angle = arm_R["elbow"]
+                arm_sholder_R.angle = arm_R["sholder"]
+
+                # FIXME: should I keep this?
+                pca.deinit()
 
             except Exception as e:
                 print(f"Error processing message: {e}")
@@ -75,30 +92,9 @@ try:
     finally:
         consumer.close()
 
-    for i in range(180):
-        current_angle = i
-        finger_thumb_R.angle = i
-        finger_index_R.angle = i
-        finger_middle_R.angle = i
-        finger_ring_R.angle = i
-        finger_pinkey_R.angle = i
 
-        time.sleep(0.03)
-        print(f"first loop: {current_angle}")
-    for i in range(180):
-        finger_thumb_R.angle = 180 - i
-        finger_index_R.angle = 180 - i
-        finger_middle_R.angle = 180 - i
-        finger_ring_R.angle = 180 - i
-        finger_pinkey_R.angle = 180 - i
 
-        current_angle = 180 - i
-        time.sleep(0.03)
-        print(f"second loop: {current_angle}")
 
-    print(f"ending angle: {current_angle}")
-
-    pca.deinit()
 
 except Exception as e:
     print(f"Error: {e}")
