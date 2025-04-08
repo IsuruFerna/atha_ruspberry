@@ -46,7 +46,7 @@ try:
     arm_elbow_R = servo.Servo(pca.channels[9])
     arm_sholder_R = servo.Servo(pca.channels[10])
 
-
+    print("waiting to read!")
     # consume incoming messages
     try:
         while True:
@@ -61,27 +61,31 @@ try:
             
             # print('Received message: {}'.format(msg.value().decode('utf-8')))
             # handle movements
+            # print("Connected to kafka!")
             try:
                 data = msg.value().decode("utf-8")
-                print(f"Received message: {data}")
+                # print(f"Received message: {data}")
                 detected_angles = json.loads(data)
+
+                # print(f"detecting angles: {detected_angles}")
                 
                 # set servo angles
                 hand_R = detected_angles["hand_R"]
                 arm_R = detected_angles["arm_R"]
 
                 finger_thumb_R.angle = hand_R["thumb"]
-                finger_index_R.angle = hand_R["thumb"]
-                finger_middle_R.angle = hand_R["thumb"]
-                finger_ring_R.angle = hand_R["thumb"]
-                finger_pinkey_R.angle = hand_R["thumb"]
+                finger_index_R.angle = hand_R["index"]
+                finger_middle_R.angle = hand_R["middle"]
+                finger_ring_R.angle = hand_R["ring"]
+                finger_pinkey_R.angle = hand_R["pinkey"]
+                # time.sleep(0.1)
 
-                arm_sholder_R.angle = arm_R["wrist"]
-                arm_elbow_R.angle = arm_R["elbow"]
-                arm_sholder_R.angle = arm_R["sholder"]
+                #arm_sholder_R.angle = arm_R["wrist"]
+                #arm_elbow_R.angle = arm_R["elbow"]
+                #arm_sholder_R.angle = arm_R["sholder"]
 
                 # FIXME: should I keep this?
-                pca.deinit()
+                # pca.deinit()
 
             except Exception as e:
                 print(f"Error processing message: {e}")
